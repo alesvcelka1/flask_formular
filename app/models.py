@@ -71,4 +71,13 @@ class Uzivatele(Base):
     surename = Column(String(50), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
+class Formular(Base):
+    __tablename__ = "formular"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    surname = Column(String(50), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    def __repr__(self):
+        return f"<Formular {self.name} {self.surname}>"
 

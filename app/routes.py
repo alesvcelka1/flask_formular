@@ -1,7 +1,7 @@
 # Standard Library imports
 
 # Core Flask imports
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 # Third-party imports
 
@@ -13,30 +13,91 @@ from .views import (
     account_management_views,
     static_views,
 )
-from .models import User,Uzivatele
+from .models import User, Uzivatele
 
 bp = Blueprint('routes', __name__)
+
 
 # alias
 db = db_manager.session
 from flask_wtf import FlaskForm, RecaptchaField
-from wtforms import StringField, PasswordField, BooleanField, SubmitField,DateField
-from wtforms.validators import DataRequired, Email, EqualTo, Length,InputRequired
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, DateField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, InputRequired, Regexp
 
 class FormFormular(FlaskForm):
-    name = StringField('Name', validators=[ InputRequired(message="You can't leave this empty")])
-    surename = StringField('Surename', validators=[ InputRequired(message="You can't leave this empty")])
+    name = StringField('Name', validators=[InputRequired(message="You can't leave this empty"),
+                                          Length(min=2, max=20, message="Name must be between 2 and 20 characters long"),
+                                          Regexp('^[A-Za-z]*$', message="Name must contain only letters") ])
+      
+    surename = StringField('Surename', validators=[InputRequired(message="You can't leave this empty"),
+                                                   Length(min=2, max=20, message="Name must be between 2 and 20 characters long"),
+                                                   Regexp('^[A-Za-z]*$', message="Name must contain only letters") ])
+
+
+# List to store users
+user_list = []
 
 @bp.route("/formular", methods=["GET", "POST"])
 def formular():
-    form=FormFormular()
+    user_list.clear()
+    users = Uzivatele.query.all()
+    for user in users:
+        user_list.append({"user_id": user.user_id, "name": user.name, "surename": user.surename})
+    form = FormFormular()
     if form.validate_on_submit():
-        print(form.name.data)
         new_user = Uzivatele(name=form.name.data, surename=form.surename.data)
         db.add(new_user)
         db.commit()
-        return "Formular submitted"
-    return render_template("formular.html",form=form)
+        user_list.append({"user_id": new_user.user_id, "name": new_user.name, "surename": new_user.surename})
+        return render_template("formular.html", form=form, users=user_list, message="Formulář odeslán")
+    return render_template("formular.html", form=form, users=user_list, message="Seznam uživatelů")
+
+@bp.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
+def edit_user(user_id):
+    user = Uzivatele.query.filter_by(user_id=user_id).first()
+    form = FormFormular(obj=user)
+    if form.validate_on_submit():
+        user.name = form.name.data
+        user.surename = form.surename.data
+        db.commit()
+        
+        # Aktualizace seznamu uživatelů
+        user_list.clear()
+        users = Uzivatele.query.all()
+        for user in users:
+            user_list.append({"user_id": user.user_id, "name": user.name, "surename": user.surename})
+        
+        return render_template("formular.html", form=form, users=user_list, message="User updated")
+    return render_template("formular.html", form=form, user=user)
+
+@bp.route("/delete_user/<int:user_id>", methods=["GET", "POST"])
+def delete_user(user_id):
+    user = Uzivatele.query.filter_by(user_id=user_id).first()
+    if user is None:
+        # Aktualizace seznamu uživatelů
+        user_list.clear()
+        users = Uzivatele.query.all()
+        for user in users:
+            user_list.append({"user_id": user.user_id, "name": user.name, "surename": user.surename})
+        return render_template("formular.html", form=FormFormular(), users=user_list, message="Uživatel nenalezen")
+    
+    db.delete(user)
+    db.commit()
+    
+    # Aktualizace seznamu uživatelů
+    user_list.clear()
+    users = Uzivatele.query.all()
+    for user in users:
+        user_list.append({"user_id": user.user_id, "name": user.name, "surename": user.surename})
+    
+    return render_template("formular.html", form=FormFormular(), users=user_list, message="Uživatel smazán")
+    
+
+# Request management
+
+@bp.before_app_request
+def before_request():
+    db()
 # Request management
 @bp.before_app_request
 def before_request():

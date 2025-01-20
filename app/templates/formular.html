@@ -1,14 +1,61 @@
-{% from "macros/fields.html" import render_input_field, render_password_field, render_checkbox_field, render_submit %}
+{% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% from "macros/fields.html" import render_input_field, render_submit %}
+
+{% block title %}Formulář{% endblock %}
 
 {% block content %}
-  <h3>Log in</h3>
-  <form method="POST" id='login-form'>
-    {{ form.hidden_tag() }}
-    {{ render_input_field(form.name) }}
-    {{ render_input_field(form.surename) }}
-    {{ render_submit() }}
-  </form>
-  <br>
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Přihlášení</h3>
+        <a href="/formular" class="btn btn-custom">Přidat nového uživatele</a>
+      </div>
+      <div class="card-body">
+        <form method="POST" id='login-form'>
+          {{ form.hidden_tag() }}
+          {{ render_input_field(form.name, lc="col-sm-3", rc="col-sm-9") }}
+          {{ render_input_field(form.surename, lc="col-sm-3", rc="col-sm-9") }}
+          <div class="form-group row">
+            <div class="col-sm-9 offset-sm-3">
+              {{ render_submit(cls="btn btn-primary") }}
+            </div>
+          </div>
+        </form>
+        {% if message %}
+          <div class="alert alert-info mt-3" role="alert">
+            {{ message }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card mt-5">
+      <div class="card-header">
+        <h3 class="mb-0">Seznam uživatelů</h3>
+      </div>
+      <div class="card-body">
+        <table class="table table-hover">
+          <thead class="thead-light">
+            <tr>
+              <th>Jméno</th>
+              <th>Příjmení</th>
+              <th>Úpravy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.surename }}</td>
+                <td>
+                  <a href="{{ url_for('routes.edit_user', user_id=user.user_id) }}" class="btn btn-warning btn-sm">Upravit</a>
+                  <a href="{{ url_for('routes.delete_user', user_id=user.user_id) }}" class="btn btn-danger btn-sm">Smazat</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 {% endblock %}
