@@ -49,7 +49,7 @@ def formular():
         db.add(new_user)
         db.commit()
         user_list.append({"user_id": new_user.user_id, "name": new_user.name, "surename": new_user.surename})
-        return render_template("formular.html", form=form, users=user_list, message="Formulář odeslán")
+        return render_template("formular.html", form=form, users=user_list, message="Formulář")
     return render_template("formular.html", form=form, users=user_list, message="Seznam uživatelů")
 
 @bp.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
