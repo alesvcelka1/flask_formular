@@ -1,29 +1,21 @@
-# Použití základního Python image
-FROM python:3.12-slim
+# Use the official Python base image
+FROM python:3.11-slim
 
-# Instalace základních nástrojů pro kompilaci
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Nastavení pracovního adresáře
+# Set the working directory in the container
 WORKDIR /app
 
-# Kopírování požadavků a jejich instalace
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the current directory contents into the container at /app
+COPY . /app
+COPY requirements.txt /app
+# Install the necessary dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Kopírování aplikace do kontejneru
-COPY . .
-
-# Nastavení prostředí pro Flask
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=5000
-
-# Exponování portu
+# Expose the port Flask will run on
 EXPOSE 5000
 
-# Spuštění aplikace
-CMD ["flask", "run"]
+# Set environment variable to indicate the app is in production mode
+#ENV FLASK_APP=flask_for_startups.py
+#ENV FLASK_RUN_HOST=0.0.0.0
+
+# Run the Flask app in development mode
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
